@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Viaggio EREV (Range Extender)</title>
+    <style>
+        :root {
+            --primary: #007AFF;
+            --bg-color: #F2F2F7;
+            --card-bg: #FFFFFF;
+            --text-main: #1C1C1E;
+            --text-muted: #8E8E93;
+            --border-color: #E5E5EA;
+            --electric-color: #34C759;
+            --gas-color: #FF9500;
+            --danger-color: #FF3B30;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .container {
+                grid-template-columns: 2fr 1.2fr;
+            }
+            .sidebar {
+                position: sticky;
+                top: 20px;
+                height: max-content;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .panel.electric { border-top: 5px solid var(--electric-color); }
+        .panel.gas { border-top: 5px solid var(--gas-color); }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .progress-container {
+            background: var(--border-color);
+            border-radius: 8px;
+            height: 12px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 10px;
+            display: flex;
+        }
+
+        .progress-bar-el { background: var(--electric-color); height: 100%; transition: width 0.2s; }
+        .progress-bar-gas { background: var(--gas-color); height: 100%; transition: width 0.2s; }
+
+        .km-status {
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-muted);
+        }
+
+        .km-status span { color: var(--primary); font-size: 16px; }
+        .km-status.complete span { color: var(--electric-color); }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .route-group {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #FAFAFC;
+        }
+        
+        .route-group-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .route-group h4 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .val-display {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .val-display.el { color: var(--electric-color); }
+        .val-display.gas { color: var(--gas-color); }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid #d1d1d6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+        }
+
+        /* Risultati box styling */
+        .res-section { margin-bottom: 20px; }
+        .res-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .res-row:last-child { border-bottom: none; }
+        
+        .res-label { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+        .res-val { font-size: 18px; font-weight: 700; }
+        .res-val.el { color: var(--electric-color); }
+        .res-val.gas { color: var(--gas-color); }
+        .res-val.tot { color: var(--primary); font-size: 24px;}
+
+        .alert-box {
+            background-color: #FFF2F2;
+            border: 1px solid #FFD1D1;
+            color: var(--danger-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="main-content">
+        <!-- GENERAL PANEL -->
+        <div class="panel">
+            <h2>1. Parametri Generali e Batteria</h2>
+            
+            <div class="input-group">
+                <div class="input-header">
+                    <label>Totale Km Previsti</label>
+                    <span class="val-display" id="val-km-tot">100 km</span>
+                </div>
+                <input type="range" id="inp-km-tot" min="10" max="1500" step="10" value="100">
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar-el" id="prog-el" style="width: 0%"></div>
+                <div class="progress-bar-gas" id="prog-gas" style="width: 0%"></div>
+            </div>
+            <div class="km-status" id="km-status">
+                Km assegnati: <span id="val-km-assigned">0</span> / <span id="val-km-target">100</span>
+                <br><small id="val-km-remaining">Devi assegnare ancora 100 km</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>Batteria</label>
+                        <span class="val-display" id="val-batt">18.8 kWh</span>
+                    </div>
+                    <input type="range" id="inp-batt" min="5" max="85" step="0.1" value="18.8">
+                </div>
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>SoC Partenza %</label>
+                        <span class="val-display" id="val-soc-start">100%</span>
+                    </div>
+                    <input type="range" id="inp-soc-start" min="0" max="100" step="1" value="100">
+                </div>
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>Target Manten. %</label>
+                        <span class="val-display" id="val-soc-target">0%</span>
+                    </div>
+                    <input type="range" id="inp-soc-target" min="0" max="100" step="1" value="0">
+                </div>
+            </div>
+            
+            <div id="alert-soc" class="alert-box">Il target SoC non può superare il SoC di partenza!</div>
+        </div>
+
+        <!-- ELECTRIC PANEL -->
+        <div class="panel electric">
+            <h2>2. Percorso in Elettrico Puro (Fase 1)</h2>
+            <div class="input-group" style="max-width: 50%;">
+                <div class="input-header">
+                    <label>Costo Ricarica</label>
+                    <span class="val-display el" id="val-cost-kwh">0.30 €/kWh</span>
+                </div>
+                <input type="range" id="inp-cost-kwh" min="0.05" max="1.00" step="0.01" value="0.30">
+            </div>
+
+            <div class="route-group">
+                <h4>Urbano / Città</h4>
+                <div class="route-group-compact">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Km</label>
+                            <span class="val-display el" id="val-el-km-urb">0 km</span>
+                        </div>
+                        <input type="range" class="km-slider" id="inp-el-km-urb" min="0" max="100" step="1" value="0">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Consumo Elettrico</label>
+                            <span class="val-display el" id="val-el-cons-urb">15 kWh/100km</span>
+                        </div>
+                        <input type="range" id="inp-el-cons-urb" min="10" max="35" step="0.5" value="15">
+                    </div>
+                </div>
+            </div>
+
+            <div class="route-group">
+                <h4>Statale / Extraurbano</h4>
+                <div class="route-group-compact">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Km</label>
+                            <span class="val-display el" id="val-el-km-mix">0 km</span>
+                        </div>
+                        <input type="range" class="km-slider" id="inp-el-km-mix" min="0" max="100" step="1" value="0">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Consumo Elettrico</label>
+                            <span class="val-display el" id="val-el-cons-mix">19 kWh/100km</span>
+                        </div>
+                        <input type="range" id="inp-el-cons-mix" min="10" max="35" step="0.5" value="19">
+                    </div>
+                </div>
+            </div>
+
+            <div class="route-group">
+                <h4>Autostrada</h4>
+                <div class="route-group-compact">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Km</label>
+                            <span class="val-display el" id="val-el-km-hw">0 km</span>
+                        </div>
+                        <input type="range" class="km-slider" id="inp-el-km-hw" min="0" max="100" step="1" value="0">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Consumo Elettrico</label>
+                            <span class="val-display el" id="val-el-cons-hw">24 kWh/100km</span>
+                        </div>
+                        <input type="range" id="inp-el-cons-hw" min="10" max="40" step="0.5" value="24">
+                    </div>
+                </div>
+            </div>
+            
+            <div id="alert-battery" class="alert-box">
+                ⚠️ Batteria insufficiente! L'energia richiesta per questi km supera la capacità disponibile (rispettando il Target SoC). I calcoli dei costi assumeranno ricariche intermedie.
+            </div>
+        </div>
+
+        <!-- GAS PANEL -->
+        <div class="panel gas">
+            <h2>3. Percorso EREV (Generatore Termico)</h2>
+            <div class="input-group" style="max-width: 50%;">
+                <div class="input-header">
+                    <label>Costo Carburante</label>
+                    <span class="val-display gas" id="val-cost-gas">1.80 €/l</span>
+                </div>
+                <input type="range" id="inp-cost-gas" min="1.00" max="2.50" step="0.01" value="1.80">
+            </div>
+
+            <!-- Generate route groups dynamically for gas speeds -->
+            <div id="gas-routes-container"></div>
+            
+        </div>
+    </div>
+
+    <!-- SIDEBAR RIEPILOGO -->
+    <div class="sidebar">
+        <div class="panel">
+            <h2>Riepilogo Totali</h2>
+            
+            <div class="res-section">
+                <h3>🔋 Elettrico</h3>
+                <div class="res-row">
+                    <span class="res-label">Km percorsi</span>
+                    <span class="res-val el" id="res-el-km">0</span>
+                </div>
+                <div class="res-row">
+                    <span class="res-label">Energia usata</span>
+                    <span class="res-val el" id="res-el-kwh">0.0 <small>kWh</small></span>
+                </div>
+                <div class="res-row">
+                    <span class="res-label">Energia disp.</span>
+                    <span class="res-val el" id="res-el-avail">0.0 <small>kWh</small></span>
+                </div>
+                <div class="res-row">
+                    <span class="res-label">Costo Ricariche</span>
+                    <span class="res-val el" id="res-el-cost">€0.00</span>
+                </div>
+            </div>
+
+            <div class="res-section">
+                <h3>⛽ Generatore EREV</h3>
+                <div class="res-row">
+                    <span class="res-label">Km percorsi</span>
+                    <span class="res-val gas" id="res-gas-km">0</span>
+                </div>
+                <div class="res-row">
+                    <span class="res-label">Carburante usato</span>
+                    <span class="res-val gas" id="res-gas-l">0.0 <small>L</small></span>
+                </div>
+                <div class="res-row">
+                    <span class="res-label">Costo Benzina</span>
+                    <span class="res-val gas" id="res-gas-cost">€0.00</span>
+                </div>
+            </div>
+
+            <div class="res-section" style="background:#F2F2F7; padding:15px; border-radius:10px; margin-top:20px;">
+                <h3 style="margin-bottom: 5px;">Totale Viaggio</h3>
+                <div class="res-row" style="border:none;">
+                    <span class="res-label">Distanza coperta</span>
+                    <span class="res-val tot" style="font-size:18px;" id="res-tot-km">0 km</span>
+                </div>
+                <div class="res-row" style="border:none; padding-top:0;">
+                    <span class="res-label">Spesa Complessiva</span>
+                    <span class="res-val tot" id="res-tot-cost">€0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Gas Scenarios Setup based on user prompt
+    const gasScenarios = [
+        { id: 'urb', label: 'Urbano / Traffico', defaultCons: 14.0 },
+        { id: '80', label: '80 km/h', defaultCons: 22.0 },
+        { id: '90', label: '90 km/h', defaultCons: 19.0 },
+        { id: '100', label: '100 km/h', defaultCons: 16.5 },
+        { id: '110', label: '110 km/h', defaultCons: 14.5 },
+        { id: '120', label: '120 km/h', defaultCons: 13.0 },
+        { id: '130', label: '130 km/h', defaultCons: 12.0 }
+    ];
+
+    // Dynamically inject Gas HTML
+    const gasContainer = document.getElementById('gas-routes-container');
+    let gasHTML = '';
+    gasScenarios.forEach(scen => {
+        gasHTML += `
+            <div class="route-group">
+                <h4>${scen.label}</h4>
+                <div class="route-group-compact">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Km Generatore</label>
+                            <span class="val-display gas" id="val-gas-km-${scen.id}">0 km</span>
+                        </div>
+                        <input type="range" class="km-slider" id="inp-gas-km-${scen.id}" min="0" max="100" step="1" value="0">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Efficienza (km/l)</label>
+                            <span class="val-display gas" id="val-gas-cons-${scen.id}">${scen.defaultCons.toFixed(1)} km/l</span>
+                        </div>
+                        <input type="range" id="inp-gas-cons-${scen.id}" min="5" max="30" step="0.1" value="${scen.defaultCons}">
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    gasContainer.innerHTML = gasHTML;
+
+    // Build references
+    const inpKmTot = document.getElementById('inp-km-tot');
+    const kmSliders = Array.from(document.querySelectorAll('.km-slider'));
+    
+    // Core inputs
+    const inputs = {
+        batt: document.getElementById('inp-batt'),
+        socStart: document.getElementById('inp-soc-start'),
+        socTarget: document.getElementById('inp-soc-target'),
+        costKwh: document.getElementById('inp-cost-kwh'),
+        costGas: document.getElementById('inp-cost-gas'),
+        
+        elKmUrb: document.getElementById('inp-el-km-urb'),
+        elConsUrb: document.getElementById('inp-el-cons-urb'),
+        elKmMix: document.getElementById('inp-el-km-mix'),
+        elConsMix: document.getElementById('inp-el-cons-mix'),
+        elKmHw: document.getElementById('inp-el-km-hw'),
+        elConsHw: document.getElementById('inp-el-cons-hw')
+    };
+
+    // Add Gas inputs to tracking dictionary
+    gasScenarios.forEach(scen => {
+        inputs[`gasKm_${scen.id}`] = document.getElementById(`inp-gas-km-${scen.id}`);
+        inputs[`gasCons_${scen.id}`] = document.getElementById(`inp-gas-cons-${scen.id}`);
+    });
+
+
+    // Label Displays
+    function updateLabels() {
+        document.getElementById('val-km-tot').innerText = inpKmTot.value + " km";
+        document.getElementById('val-batt').innerText = parseFloat(inputs.batt.value).toFixed(1) + " kWh";
+        document.getElementById('val-soc-start').innerText = inputs.socStart.value + "%";
+        document.getElementById('val-soc-target').innerText = inputs.socTarget.value + "%";
+        document.getElementById('val-cost-kwh').innerText = parseFloat(inputs.costKwh.value).toFixed(2) + " €/kWh";
+        document.getElementById('val-cost-gas').innerText = parseFloat(inputs.costGas.value).toFixed(2) + " €/l";
+
+        document.getElementById('val-el-km-urb').innerText = inputs.elKmUrb.value + " km";
+        document.getElementById('val-el-cons-urb').innerText = parseFloat(inputs.elConsUrb.value).toFixed(1) + " kWh/100km";
+        document.getElementById('val-el-km-mix').innerText = inputs.elKmMix.value + " km";
+        document.getElementById('val-el-cons-mix').innerText = parseFloat(inputs.elConsMix.value).toFixed(1) + " kWh/100km";
+        document.getElementById('val-el-km-hw').innerText = inputs.elKmHw.value + " km";
+        document.getElementById('val-el-cons-hw').innerText = parseFloat(inputs.elConsHw.value).toFixed(1) + " kWh/100km";
+
+        gasScenarios.forEach(scen => {
+            document.getElementById(`val-gas-km-${scen.id}`).innerText = inputs[`gasKm_${scen.id}`].value + " km";
+            document.getElementById(`val-gas-cons-${scen.id}`).innerText = parseFloat(inputs[`gasCons_${scen.id}`].value).toFixed(1) + " km/l";
+        });
+    }
+
+    // Logic: enforce that sum of km sliders <= total km
+    function adjustKmSliders() {
+        let maxTot = parseInt(inpKmTot.value);
+        let currentSum = kmSliders.reduce((sum, inp) => sum + parseInt(inp.value), 0);
+
+        // Trim if over
+        if (currentSum > maxTot) {
+            let diff = currentSum - maxTot;
+            for (let i = kmSliders.length - 1; i >= 0; i--) {
+                if (diff <= 0) break;
+                let val = parseInt(kmSliders[i].value);
+                if (val > 0) {
+                    let sub = Math.min(val, diff);
+                    kmSliders[i].value = val - sub;
+                    diff -= sub;
+                }
+            }
+            currentSum = maxTot;
+        }
+
+        let remaining = maxTot - currentSum;
+        
+        // Update max limits dynamically
+        kmSliders.forEach(inp => {
+            let val = parseInt(inp.value);
+            inp.max = val + remaining;
+        });
+
+        // Update progress UI
+        document.getElementById('val-km-assigned').innerText = currentSum;
+        document.getElementById('val-km-target').innerText = maxTot;
+        
+        let kmStatus = document.getElementById('km-status');
+        let remainingText = document.getElementById('val-km-remaining');
+        
+        if (remaining > 0) {
+            kmStatus.classList.remove('complete');
+            remainingText.innerText = `Devi assegnare ancora ${remaining} km`;
+            remainingText.style.color = "var(--text-muted)";
+        } else {
+            kmStatus.classList.add('complete');
+            remainingText.innerText = "✓ Tutti i chilometri sono stati assegnati";
+            remainingText.style.color = "var(--electric-color)";
+        }
+
+        // Progress bars width
+        let sumEl = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
+        let sumGas = 0;
+        gasScenarios.forEach(scen => {
+            sumGas += parseInt(inputs[`gasKm_${scen.id}`].value);
+        });
+        
+        document.getElementById('prog-el').style.width = (sumEl / maxTot * 100) + "%";
+        document.getElementById('prog-gas').style.width = (sumGas / maxTot * 100) + "%";
+    }
+
+    // Main calc function
+    function calculateResults() {
+        // Battery checks
+        let socStart = parseInt(inputs.socStart.value);
+        let socTarget = parseInt(inputs.socTarget.value);
+        let alertSoc = document.getElementById('alert-soc');
+        
+        if (socTarget > socStart) {
+            alertSoc.style.display = 'block';
+            socTarget = socStart; // Logic limit
+        } else {
+            alertSoc.style.display = 'none';
+        }
+
+        let battCap = parseFloat(inputs.batt.value);
+        let kwhAvail = battCap * ((socStart - socTarget) / 100);
+        document.getElementById('res-el-avail').innerHTML = `${kwhAvail.toFixed(1)} <small>kWh</small>`;
+
+        // Electric consumption
+        let kwhUrb = (parseInt(inputs.elKmUrb.value) / 100) * parseFloat(inputs.elConsUrb.value);
+        let kwhMix = (parseInt(inputs.elKmMix.value) / 100) * parseFloat(inputs.elConsMix.value);
+        let kwhHw = (parseInt(inputs.elKmHw.value) / 100) * parseFloat(inputs.elConsHw.value);
+        
+        let totKwhUsed = kwhUrb + kwhMix + kwhHw;
+        let totElKm = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
+        let totElCost = totKwhUsed * parseFloat(inputs.costKwh.value);
+
+        // Battery Warning
+        let alertBatt = document.getElementById('alert-battery');
+        if (totKwhUsed > kwhAvail && totKwhUsed > 0) {
+            alertBatt.style.display = 'block';
+            alertBatt.innerHTML = `⚠️ <b>Batteria insufficiente!</b> Hai richiesto ${totKwhUsed.toFixed(1)} kWh, ma ne hai disponibili solo ${kwhAvail.toFixed(1)}. I calcoli assumeranno una ricarica intermedia.`;
+        } else {
+            alertBatt.style.display = 'none';
+        }
+
+        // Gas consumption
+        let totLitUsed = 0;
+        let totGasKm = 0;
+        
+        gasScenarios.forEach(scen => {
+            let k = parseInt(inputs[`gasKm_${scen.id}`].value);
+            let c = parseFloat(inputs[`gasCons_${scen.id}`].value);
+            totGasKm += k;
+            if(k > 0 && c > 0) {
+                totLitUsed += (k / c);
+            }
+        });
+
+        let totGasCost = totLitUsed * parseFloat(inputs.costGas.value);
+
+        // Update DOM Results
+        document.getElementById('res-el-km').innerText = totElKm;
+        document.getElementById('res-el-kwh').innerHTML = `${totKwhUsed.toFixed(1)} <small>kWh</small>`;
+        document.getElementById('res-el-cost').innerText = "€" + totElCost.toFixed(2);
+
+        document.getElementById('res-gas-km').innerText = totGasKm;
+        document.getElementById('res-gas-l').innerHTML = `${totLitUsed.toFixed(1)} <small>L</small>`;
+        document.getElementById('res-gas-cost').innerText = "€" + totGasCost.toFixed(2);
+
+        document.getElementById('res-tot-km').innerText = (totElKm + totGasKm) + " km";
+        document.getElementById('res-tot-cost').innerText = "€" + (totElCost + totGasCost).toFixed(2);
+    }
+
+    function onInteract() {
+        adjustKmSliders();
+        updateLabels();
+        calculateResults();
+    }
+
+    // Attach Listeners
+    inpKmTot.addEventListener('input', onInteract);
+    Object.values(inputs).forEach(inp => {
+        inp.addEventListener('input', onInteract);
+    });
+
+    // Init state: force first slider (Urbano EV) to 100 for demonstration
+    inputs.elKmUrb.value = 100;
+    onInteract();
+</script>
+</body>
+</html>
