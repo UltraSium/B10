@@ -212,7 +212,6 @@
 
 <div class="container">
     <div class="main-content">
-        <!-- 1. GENERAL PANEL -->
         <div class="panel">
             <h2>1. Parametri Generali e Batteria</h2>
             
@@ -260,7 +259,6 @@
             <div id="alert-soc" class="alert-box">Il target SoC non può superare il SoC di partenza!</div>
         </div>
 
-        <!-- 2. ELECTRIC PANEL -->
         <div class="panel electric">
             <h2>2. Percorso in Elettrico Puro (Fase 1)</h2>
             <div class="input-group" style="max-width: 50%;">
@@ -336,7 +334,6 @@
             </div>
         </div>
 
-        <!-- 3. GAS PANEL -->
         <div class="panel gas">
             <h2>3. Percorso EREV (Generatore Termico)</h2>
             <div class="input-group" style="max-width: 50%;">
@@ -350,11 +347,10 @@
             <div id="gas-routes-container"></div>
         </div>
 
-        <!-- 4. CHARGE TIMING PANEL -->
         <div class="panel charge">
             <h2>4. Tempi di Ricarica (Modello Curva Reale)</h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
-                Calcolo basato sui limiti fisici della B10 REEV (6.6 kW AC / 46 kW DC) con gestione termica del BMS.
+                Calcolo dei tempi considerando i limiti della curva di ricarica B10 REEV e le potenze massime selezionate. La potenza effettiva sarà la minore tra quella disponibile e quella richiesta dal BMS.
             </p>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -375,22 +371,40 @@
                 </div>
             </div>
 
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>Potenza AC (Wallbox/Colonnina)</label>
+                        <span class="val-display charge" id="val-power-ac">6.6 kW</span>
+                    </div>
+                    <input type="range" id="inp-power-ac" min="1.4" max="22" step="0.1" value="6.6">
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>Potenza DC (Fast/HPC)</label>
+                        <span class="val-display charge" id="val-power-dc">46 kW</span>
+                    </div>
+                    <input type="range" id="inp-power-dc" min="10" max="150" step="1" value="46">
+                </div>
+            </div>
+
             <div id="alert-charge" class="alert-box">Il SoC di fine ricarica deve essere maggiore di quello iniziale!</div>
 
             <div class="route-group" style="margin-top: 15px; background: #F8F8FD; border-color: #D1C4E9;">
                 <div class="route-group-compact">
                     <div>
-                        <h4 style="color: #673AB7; font-weight: 600;">AC 6.6 kW</h4>
+                        <h4 style="color: #673AB7; font-weight: 600;">AC <span id="lbl-res-ac">6.6</span> kW</h4>
                         <div style="font-size: 26px; font-weight: 700; color: var(--text-main);" id="res-time-ac">0h 0m</div>
                         <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">
-                            Erogazione piatta costante, curva di assorbimento minima solo oltre il 95%.
+                            Erogazione basata sulla potenza massima selezionata, curva di assorbimento in riduzione solo oltre il 95%.
                         </div>
                     </div>
                     <div>
-                        <h4 style="color: var(--charge-color); font-weight: 600;">DC 46 kW (Fast)</h4>
+                        <h4 style="color: var(--charge-color); font-weight: 600;">DC <span id="lbl-res-dc">46</span> kW (Fast)</h4>
                         <div style="font-size: 26px; font-weight: 700; color: var(--text-main);" id="res-time-dc">0h 0m</div>
                         <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">
-                            Taglio di potenza ritardato (dal 55% in poi) grazie al picco C-rate meno aggressivo.
+                            Potenza limitata dal profilo termico BMS (plateau a max 46kW) e dalla colonnina, tapering oltre il 55%.
                         </div>
                     </div>
                 </div>
@@ -398,7 +412,6 @@
         </div>
     </div>
 
-    <!-- SIDEBAR RIEPILOGO -->
     <div class="sidebar">
         <div class="panel">
             <h2>Riepilogo Totali</h2>
@@ -511,7 +524,9 @@
         elConsHw: document.getElementById('inp-el-cons-hw'),
 
         chargeStart: document.getElementById('inp-charge-start'),
-        chargeEnd: document.getElementById('inp-charge-end')
+        chargeEnd: document.getElementById('inp-charge-end'),
+        powerAC: document.getElementById('inp-power-ac'),
+        powerDC: document.getElementById('inp-power-dc')
     };
 
     gasScenarios.forEach(scen => {
@@ -536,6 +551,11 @@
 
         document.getElementById('val-charge-start').innerText = inputs.chargeStart.value + "%";
         document.getElementById('val-charge-end').innerText = inputs.chargeEnd.value + "%";
+
+        document.getElementById('val-power-ac').innerText = parseFloat(inputs.powerAC.value).toFixed(1) + " kW";
+        document.getElementById('val-power-dc').innerText = inputs.powerDC.value + " kW";
+        document.getElementById('lbl-res-ac').innerText = parseFloat(inputs.powerAC.value).toFixed(1);
+        document.getElementById('lbl-res-dc').innerText = inputs.powerDC.value;
 
         gasScenarios.forEach(scen => {
             document.getElementById(`val-gas-km-${scen.id}`).innerText = inputs[`gasKm_${scen.id}`].value + " km";
@@ -595,6 +615,8 @@
     function calculateChargeTimes() {
         let cStart = parseInt(inputs.chargeStart.value);
         let cEnd = parseInt(inputs.chargeEnd.value);
+        let maxAC = parseFloat(inputs.powerAC.value);
+        let maxDC = parseFloat(inputs.powerDC.value);
         let battCap = parseFloat(inputs.batt.value);
         
         let alertCharge = document.getElementById('alert-charge');
@@ -613,20 +635,23 @@
         let kwhPerPercent = battCap / 100;
 
         for (let i = cStart; i < cEnd; i++) {
-            // Algoritmo Tapering DC 46kW aggiornato
-            let pDC = 46;
-            if (i < 10) pDC = 30 + (i * 1.6); // Ramp up
-            else if (i <= 55) pDC = 46; // Plateau 46kW mantenuto più a lungo
-            else if (i <= 75) pDC = 46 - ((i - 55) * 0.8); // Taglio a 30kW
-            else if (i <= 90) pDC = 30 - ((i - 75) * 1.0); // Taglio a 15kW
-            else pDC = 15 - ((i - 90) * 1.0); // Fine carica sotto i 15kW
+            // Curva Ideale BMS DC
+            let idealDC = 46;
+            if (i < 10) idealDC = 30 + (i * 1.6); // Ramp up
+            else if (i <= 55) idealDC = 46; // Plateau BMS
+            else if (i <= 75) idealDC = 46 - ((i - 55) * 0.8); // Taglio a 30kW
+            else if (i <= 90) idealDC = 30 - ((i - 75) * 1.0); // Taglio a 15kW
+            else idealDC = 15 - ((i - 90) * 1.0); // Fine carica
             
-            if (pDC < 4) pDC = 4; // Limite hardware
+            if (idealDC < 4) idealDC = 4; // Limite hardware minimo
 
-            // Algoritmo Tapering AC 6.6kW aggiornato
-            let pAC = 6.6;
-            if (i > 95) pAC = 6.6 - ((i - 95) * 0.5); // Taglio solo negli ultimissimi punti %
-            if (pAC < 3) pAC = 3;
+            // Assorbimento effettivo = minore tra disponibilità colonnina e limite BMS
+            let pDC = Math.min(maxDC, idealDC);
+
+            // Algoritmo Tapering AC basato sulla potenza max disponibile
+            let pAC = maxAC;
+            if (i > 95) pAC = maxAC - ((i - 95) * (maxAC * 0.075)); // Taglio in proporzione
+            if (pAC < Math.min(3, maxAC)) pAC = Math.min(3, maxAC);
 
             timeDC_h += (kwhPerPercent / (pDC * efficiency));
             timeAC_h += (kwhPerPercent / (pAC * efficiency));
