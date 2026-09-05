@@ -15,6 +15,7 @@
             --electric-color: #34C759;
             --gas-color: #FF9500;
             --danger-color: #FF3B30;
+            --charge-color: #AF52DE;
         }
 
         * {
@@ -61,6 +62,7 @@
         
         .panel.electric { border-top: 5px solid var(--electric-color); }
         .panel.gas { border-top: 5px solid var(--gas-color); }
+        .panel.charge { border-top: 5px solid var(--charge-color); }
 
         h2 {
             font-size: 20px;
@@ -149,6 +151,7 @@
         
         .val-display.el { color: var(--electric-color); }
         .val-display.gas { color: var(--gas-color); }
+        .val-display.charge { color: var(--charge-color); }
 
         input[type=range] {
             -webkit-appearance: none;
@@ -176,7 +179,6 @@
             margin-top: -7px;
         }
 
-        /* Risultati box styling */
         .res-section { margin-bottom: 20px; }
         .res-row {
             display: flex;
@@ -210,7 +212,7 @@
 
 <div class="container">
     <div class="main-content">
-        <!-- GENERAL PANEL -->
+        <!-- 1. GENERAL PANEL -->
         <div class="panel">
             <h2>1. Parametri Generali e Batteria</h2>
             
@@ -234,7 +236,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                 <div class="input-group">
                     <div class="input-header">
-                        <label>Batteria</label>
+                        <label>Batteria (Capacità Utile)</label>
                         <span class="val-display" id="val-batt">18.8 kWh</span>
                     </div>
                     <input type="range" id="inp-batt" min="5" max="85" step="0.1" value="18.8">
@@ -249,16 +251,16 @@
                 <div class="input-group">
                     <div class="input-header">
                         <label>Target Manten. %</label>
-                        <span class="val-display" id="val-soc-target">15%</span>
+                        <span class="val-display" id="val-soc-target">0%</span>
                     </div>
-                    <input type="range" id="inp-soc-target" min="0" max="100" step="1" value="15">
+                    <input type="range" id="inp-soc-target" min="0" max="100" step="1" value="0">
                 </div>
             </div>
             
             <div id="alert-soc" class="alert-box">Il target SoC non può superare il SoC di partenza!</div>
         </div>
 
-        <!-- ELECTRIC PANEL -->
+        <!-- 2. ELECTRIC PANEL -->
         <div class="panel electric">
             <h2>2. Percorso in Elettrico Puro (Fase 1)</h2>
             <div class="input-group" style="max-width: 50%;">
@@ -330,11 +332,11 @@
             </div>
             
             <div id="alert-battery" class="alert-box">
-                ⚠️ Batteria insufficiente! L'energia richiesta per questi km supera la capacità disponibile (rispettando il Target SoC). I calcoli dei costi assumeranno ricariche intermedie.
+                ⚠️ Batteria insufficiente! L'energia richiesta supera la capacità disponibile (rispettando il Target SoC). I calcoli assumeranno ricariche intermedie.
             </div>
         </div>
 
-        <!-- GAS PANEL -->
+        <!-- 3. GAS PANEL -->
         <div class="panel gas">
             <h2>3. Percorso EREV (Generatore Termico)</h2>
             <div class="input-group" style="max-width: 50%;">
@@ -345,9 +347,54 @@
                 <input type="range" id="inp-cost-gas" min="1.00" max="2.50" step="0.01" value="1.80">
             </div>
 
-            <!-- Generate route groups dynamically for gas speeds -->
             <div id="gas-routes-container"></div>
+        </div>
+
+        <!-- 4. CHARGE TIMING PANEL -->
+        <div class="panel charge">
+            <h2>4. Tempi di Ricarica (Modello Curva Reale)</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
+                Calcolo basato sui limiti fisici della B10 REEV (6.6 kW AC / 46 kW DC) con gestione termica del BMS.
+            </p>
             
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>SoC Inizio Ricarica</label>
+                        <span class="val-display charge" id="val-charge-start">20%</span>
+                    </div>
+                    <input type="range" id="inp-charge-start" min="0" max="99" step="1" value="20">
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-header">
+                        <label>SoC Fine Ricarica</label>
+                        <span class="val-display charge" id="val-charge-end">80%</span>
+                    </div>
+                    <input type="range" id="inp-charge-end" min="1" max="100" step="1" value="80">
+                </div>
+            </div>
+
+            <div id="alert-charge" class="alert-box">Il SoC di fine ricarica deve essere maggiore di quello iniziale!</div>
+
+            <div class="route-group" style="margin-top: 15px; background: #F8F8FD; border-color: #D1C4E9;">
+                <div class="route-group-compact">
+                    <div>
+                        <h4 style="color: #673AB7; font-weight: 600;">AC 6.6 kW</h4>
+                        <div style="font-size: 26px; font-weight: 700; color: var(--text-main);" id="res-time-ac">0h 0m</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">
+                            Erogazione piatta costante, curva di assorbimento minima solo oltre il 95%.
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--charge-color); font-weight: 600;">DC 46 kW (Fast)</h4>
+                        <div style="font-size: 26px; font-weight: 700; color: var(--text-main);" id="res-time-dc">0h 0m</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">
+                            Taglio di potenza ritardato (dal 55% in poi) grazie al picco C-rate meno aggressivo.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -408,18 +455,17 @@
 </div>
 
 <script>
-    // Gas Scenarios Setup based on user prompt
     const gasScenarios = [
-        { id: 'urb', label: 'Urbano / Traffico', defaultCons: 14.0 },
-        { id: '80', label: '80 km/h', defaultCons: 22.0 },
-        { id: '90', label: '90 km/h', defaultCons: 19.0 },
-        { id: '100', label: '100 km/h', defaultCons: 16.5 },
-        { id: '110', label: '110 km/h', defaultCons: 14.5 },
-        { id: '120', label: '120 km/h', defaultCons: 13.0 },
-        { id: '130', label: '130 km/h', defaultCons: 12.0 }
+        { id: 'urb', label: 'Urbano (<50 km/h)', defaultCons: 7.0 },
+        { id: '70', label: '70 km/h', defaultCons: 5.4 },
+        { id: '80', label: '80 km/h', defaultCons: 5.8 },
+        { id: '90', label: '90 km/h', defaultCons: 6.2 },
+        { id: '100', label: '100 km/h', defaultCons: 6.7 },
+        { id: '110', label: '110 km/h', defaultCons: 7.1 },
+        { id: '120', label: '120 km/h', defaultCons: 7.7 },
+        { id: '130', label: '130 km/h', defaultCons: 8.5 }
     ];
 
-    // Dynamically inject Gas HTML
     const gasContainer = document.getElementById('gas-routes-container');
     let gasHTML = '';
     gasScenarios.forEach(scen => {
@@ -436,10 +482,10 @@
                     </div>
                     <div class="input-group">
                         <div class="input-header">
-                            <label>Efficienza (km/l)</label>
-                            <span class="val-display gas" id="val-gas-cons-${scen.id}">${scen.defaultCons.toFixed(1)} km/l</span>
+                            <label>Consumo (l/100km)</label>
+                            <span class="val-display gas" id="val-gas-cons-${scen.id}">${scen.defaultCons.toFixed(1)} l/100km</span>
                         </div>
-                        <input type="range" id="inp-gas-cons-${scen.id}" min="5" max="30" step="0.1" value="${scen.defaultCons}">
+                        <input type="range" id="inp-gas-cons-${scen.id}" min="3" max="15" step="0.1" value="${scen.defaultCons}">
                     </div>
                 </div>
             </div>
@@ -447,11 +493,9 @@
     });
     gasContainer.innerHTML = gasHTML;
 
-    // Build references
     const inpKmTot = document.getElementById('inp-km-tot');
     const kmSliders = Array.from(document.querySelectorAll('.km-slider'));
     
-    // Core inputs
     const inputs = {
         batt: document.getElementById('inp-batt'),
         socStart: document.getElementById('inp-soc-start'),
@@ -464,17 +508,17 @@
         elKmMix: document.getElementById('inp-el-km-mix'),
         elConsMix: document.getElementById('inp-el-cons-mix'),
         elKmHw: document.getElementById('inp-el-km-hw'),
-        elConsHw: document.getElementById('inp-el-cons-hw')
+        elConsHw: document.getElementById('inp-el-cons-hw'),
+
+        chargeStart: document.getElementById('inp-charge-start'),
+        chargeEnd: document.getElementById('inp-charge-end')
     };
 
-    // Add Gas inputs to tracking dictionary
     gasScenarios.forEach(scen => {
         inputs[`gasKm_${scen.id}`] = document.getElementById(`inp-gas-km-${scen.id}`);
         inputs[`gasCons_${scen.id}`] = document.getElementById(`inp-gas-cons-${scen.id}`);
     });
 
-
-    // Label Displays
     function updateLabels() {
         document.getElementById('val-km-tot').innerText = inpKmTot.value + " km";
         document.getElementById('val-batt').innerText = parseFloat(inputs.batt.value).toFixed(1) + " kWh";
@@ -490,18 +534,19 @@
         document.getElementById('val-el-km-hw').innerText = inputs.elKmHw.value + " km";
         document.getElementById('val-el-cons-hw').innerText = parseFloat(inputs.elConsHw.value).toFixed(1) + " kWh/100km";
 
+        document.getElementById('val-charge-start').innerText = inputs.chargeStart.value + "%";
+        document.getElementById('val-charge-end').innerText = inputs.chargeEnd.value + "%";
+
         gasScenarios.forEach(scen => {
             document.getElementById(`val-gas-km-${scen.id}`).innerText = inputs[`gasKm_${scen.id}`].value + " km";
-            document.getElementById(`val-gas-cons-${scen.id}`).innerText = parseFloat(inputs[`gasCons_${scen.id}`].value).toFixed(1) + " km/l";
+            document.getElementById(`val-gas-cons-${scen.id}`).innerText = parseFloat(inputs[`gasCons_${scen.id}`].value).toFixed(1) + " l/100km";
         });
     }
 
-    // Logic: enforce that sum of km sliders <= total km
     function adjustKmSliders() {
         let maxTot = parseInt(inpKmTot.value);
         let currentSum = kmSliders.reduce((sum, inp) => sum + parseInt(inp.value), 0);
 
-        // Trim if over
         if (currentSum > maxTot) {
             let diff = currentSum - maxTot;
             for (let i = kmSliders.length - 1; i >= 0; i--) {
@@ -518,13 +563,11 @@
 
         let remaining = maxTot - currentSum;
         
-        // Update max limits dynamically
         kmSliders.forEach(inp => {
             let val = parseInt(inp.value);
             inp.max = val + remaining;
         });
 
-        // Update progress UI
         document.getElementById('val-km-assigned').innerText = currentSum;
         document.getElementById('val-km-target').innerText = maxTot;
         
@@ -541,27 +584,73 @@
             remainingText.style.color = "var(--electric-color)";
         }
 
-        // Progress bars width
         let sumEl = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
         let sumGas = 0;
-        gasScenarios.forEach(scen => {
-            sumGas += parseInt(inputs[`gasKm_${scen.id}`].value);
-        });
+        gasScenarios.forEach(scen => { sumGas += parseInt(inputs[`gasKm_${scen.id}`].value); });
         
         document.getElementById('prog-el').style.width = (sumEl / maxTot * 100) + "%";
         document.getElementById('prog-gas').style.width = (sumGas / maxTot * 100) + "%";
     }
 
-    // Main calc function
+    function calculateChargeTimes() {
+        let cStart = parseInt(inputs.chargeStart.value);
+        let cEnd = parseInt(inputs.chargeEnd.value);
+        let battCap = parseFloat(inputs.batt.value);
+        
+        let alertCharge = document.getElementById('alert-charge');
+        if(cStart >= cEnd) {
+            alertCharge.style.display = 'block';
+            document.getElementById('res-time-ac').innerText = "--";
+            document.getElementById('res-time-dc').innerText = "--";
+            return;
+        } else {
+            alertCharge.style.display = 'none';
+        }
+
+        let timeAC_h = 0;
+        let timeDC_h = 0;
+        let efficiency = 0.92; // 8% di perdita calore/inverter
+        let kwhPerPercent = battCap / 100;
+
+        for (let i = cStart; i < cEnd; i++) {
+            // Algoritmo Tapering DC 46kW aggiornato
+            let pDC = 46;
+            if (i < 10) pDC = 30 + (i * 1.6); // Ramp up
+            else if (i <= 55) pDC = 46; // Plateau 46kW mantenuto più a lungo
+            else if (i <= 75) pDC = 46 - ((i - 55) * 0.8); // Taglio a 30kW
+            else if (i <= 90) pDC = 30 - ((i - 75) * 1.0); // Taglio a 15kW
+            else pDC = 15 - ((i - 90) * 1.0); // Fine carica sotto i 15kW
+            
+            if (pDC < 4) pDC = 4; // Limite hardware
+
+            // Algoritmo Tapering AC 6.6kW aggiornato
+            let pAC = 6.6;
+            if (i > 95) pAC = 6.6 - ((i - 95) * 0.5); // Taglio solo negli ultimissimi punti %
+            if (pAC < 3) pAC = 3;
+
+            timeDC_h += (kwhPerPercent / (pDC * efficiency));
+            timeAC_h += (kwhPerPercent / (pAC * efficiency));
+        }
+
+        let formatTime = (hoursFloat) => {
+            let h = Math.floor(hoursFloat);
+            let m = Math.round((hoursFloat - h) * 60);
+            if(m === 60) { h++; m = 0; }
+            return h > 0 ? `${h}h ${m}m` : `${m}m`;
+        };
+
+        document.getElementById('res-time-ac').innerText = formatTime(timeAC_h);
+        document.getElementById('res-time-dc').innerText = formatTime(timeDC_h);
+    }
+
     function calculateResults() {
-        // Battery checks
         let socStart = parseInt(inputs.socStart.value);
         let socTarget = parseInt(inputs.socTarget.value);
         let alertSoc = document.getElementById('alert-soc');
         
         if (socTarget > socStart) {
             alertSoc.style.display = 'block';
-            socTarget = socStart; // Logic limit
+            socTarget = socStart;
         } else {
             alertSoc.style.display = 'none';
         }
@@ -570,7 +659,6 @@
         let kwhAvail = battCap * ((socStart - socTarget) / 100);
         document.getElementById('res-el-avail').innerHTML = `${kwhAvail.toFixed(1)} <small>kWh</small>`;
 
-        // Electric consumption
         let kwhUrb = (parseInt(inputs.elKmUrb.value) / 100) * parseFloat(inputs.elConsUrb.value);
         let kwhMix = (parseInt(inputs.elKmMix.value) / 100) * parseFloat(inputs.elConsMix.value);
         let kwhHw = (parseInt(inputs.elKmHw.value) / 100) * parseFloat(inputs.elConsHw.value);
@@ -579,31 +667,24 @@
         let totElKm = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
         let totElCost = totKwhUsed * parseFloat(inputs.costKwh.value);
 
-        // Battery Warning
         let alertBatt = document.getElementById('alert-battery');
         if (totKwhUsed > kwhAvail && totKwhUsed > 0) {
             alertBatt.style.display = 'block';
-            alertBatt.innerHTML = `⚠️ <b>Batteria insufficiente!</b> Hai richiesto ${totKwhUsed.toFixed(1)} kWh, ma ne hai disponibili solo ${kwhAvail.toFixed(1)}. I calcoli assumeranno una ricarica intermedia.`;
         } else {
             alertBatt.style.display = 'none';
         }
 
-        // Gas consumption
         let totLitUsed = 0;
         let totGasKm = 0;
-        
         gasScenarios.forEach(scen => {
             let k = parseInt(inputs[`gasKm_${scen.id}`].value);
             let c = parseFloat(inputs[`gasCons_${scen.id}`].value);
             totGasKm += k;
-            if(k > 0 && c > 0) {
-                totLitUsed += (k / c);
-            }
+            if(k > 0 && c > 0) totLitUsed += (k / 100) * c; 
         });
 
         let totGasCost = totLitUsed * parseFloat(inputs.costGas.value);
 
-        // Update DOM Results
         document.getElementById('res-el-km').innerText = totElKm;
         document.getElementById('res-el-kwh').innerHTML = `${totKwhUsed.toFixed(1)} <small>kWh</small>`;
         document.getElementById('res-el-cost').innerText = "€" + totElCost.toFixed(2);
@@ -619,17 +700,15 @@
     function onInteract() {
         adjustKmSliders();
         updateLabels();
+        calculateChargeTimes();
         calculateResults();
     }
 
-    // Attach Listeners
     inpKmTot.addEventListener('input', onInteract);
     Object.values(inputs).forEach(inp => {
         inp.addEventListener('input', onInteract);
     });
 
-    // Init state: force first slider (Urbano EV) to 100 for demonstration
-    inputs.elKmUrb.value = 100;
     onInteract();
 </script>
 </body>
