@@ -257,6 +257,15 @@
             </div>
             
             <div id="alert-soc" class="alert-box">Il target SoC non può superare il SoC di partenza!</div>
+
+            <!-- BLOCCO SoC Residuo Stimato -->
+            <div style="margin-top: 15px; padding: 12px; background-color: #F2F8F4; border: 1px solid #C8E6C9; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 14px; color: #2E7D32;">SoC Residuo Stimato:</span>
+                    <span id="val-soc-residuo" style="font-size: 20px; font-weight: 700; color: var(--electric-color);">100.0%</span>
+                </div>
+                <div style="font-size: 12px; color: #4CAF50; margin-top: 4px;">Percentuale rimasta dopo i km percorsi in Elettrico Puro (Fase 2).</div>
+            </div>
         </div>
 
         <div class="panel electric">
@@ -684,11 +693,26 @@
         let kwhAvail = battCap * ((socStart - socTarget) / 100);
         document.getElementById('res-el-avail').innerHTML = `${kwhAvail.toFixed(1)} <small>kWh</small>`;
 
+        // Calcolo energia REALE usata basata SOLO sui km in elettrico
         let kwhUrb = (parseInt(inputs.elKmUrb.value) / 100) * parseFloat(inputs.elConsUrb.value);
         let kwhMix = (parseInt(inputs.elKmMix.value) / 100) * parseFloat(inputs.elConsMix.value);
         let kwhHw = (parseInt(inputs.elKmHw.value) / 100) * parseFloat(inputs.elConsHw.value);
         
         let totKwhUsed = kwhUrb + kwhMix + kwhHw;
+
+        // Calcolo SoC Residuo
+        let consumedSocPerc = (totKwhUsed / battCap) * 100;
+        let remainingSoc = socStart - consumedSocPerc;
+        
+        let socResiduoEl = document.getElementById('val-soc-residuo');
+        if (remainingSoc < 0) {
+            socResiduoEl.innerText = "0.0% (Sotto zero: " + remainingSoc.toFixed(1) + "%)";
+            socResiduoEl.style.color = "var(--danger-color)";
+        } else {
+            socResiduoEl.innerText = remainingSoc.toFixed(1) + "%";
+            socResiduoEl.style.color = "var(--electric-color)";
+        }
+
         let totElKm = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
         let totElCost = totKwhUsed * parseFloat(inputs.costKwh.value);
 
