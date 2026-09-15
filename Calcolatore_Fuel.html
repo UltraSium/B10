@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore Costi B10 REEV</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #1e1e1e; color: #e0e0e0; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: #2d2d2d; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 500px; width: 100%; }
+        h2 { text-align: center; color: #61dafb; margin-top: 0; }
+        .control-group { margin-bottom: 25px; }
+        label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #61dafb; }
+        .metrics { display: flex; gap: 15px; margin-bottom: 25px; }
+        .metric-card { flex: 1; background: #3d3d3d; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #4d4d4d; }
+        .metric-card span { display: block; font-size: 1.5em; font-weight: bold; color: #61dafb; margin-top: 8px; }
+        .cost-card { background: #004d40; color: #e0f2f1; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #00695c; }
+        .cost-card h3 { margin: 0 0 10px 0; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px; }
+        .cost-card .total { font-size: 2.8em; font-weight: bold; }
+        .footnote { text-align: center; font-size: 0.8em; color: #9e9e9e; margin-top: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>B10 REEV - Trip Cost</h2>
+        
+        <div class="control-group">
+            <label>Velocità <span id="speedVal">110 km/h</span></label>
+            <input type="range" id="speed" min="30" max="130" value="110" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Distanza <span id="distVal">600 km</span></label>
+            <input type="range" id="dist" min="10" max="1000" value="600" step="10">
+        </div>
+
+        <div class="control-group">
+            <label>Prezzo Benzina <span id="gasVal">1.80 €/L</span></label>
+            <input type="range" id="gas" min="1.50" max="2.50" value="1.80" step="0.01">
+        </div>
+
+        <div class="metrics">
+            <div class="metric-card">
+                Media
+                <span id="outConsumo">6.42 L/100km</span>
+            </div>
+            <div class="metric-card">
+                Serbatoio
+                <span id="outLitri">38.5 L</span>
+            </div>
+        </div>
+
+        <div class="cost-card">
+            <h3>Costo Totale (Fuel 80%)</h3>
+            <div class="total" id="outCosto">€ 69.30</div>
+        </div>
+
+        <div class="footnote">
+            L'energia elettrica è autoprodotta dal carburante. Costo colonnina: 0€
+        </div>
+    </div>
+
+    <script>
+        const speedSlider = document.getElementById('speed');
+        const distSlider = document.getElementById('dist');
+        const gasSlider = document.getElementById('gas');
+        
+        const speedVal = document.getElementById('speedVal');
+        const distVal = document.getElementById('distVal');
+        const gasVal = document.getElementById('gasVal');
+        
+        const outConsumo = document.getElementById('outConsumo');
+        const outLitri = document.getElementById('outLitri');
+        const outCosto = document.getElementById('outCosto');
+
+        // Look-up table curva aerodinamica
+        const consumptionMap = [
+            { speed: 30, cons: 13.0 },
+            { speed: 50, cons: 14.0 },
+            { speed: 70, cons: 15.5 },
+            { speed: 90, cons: 17.5 },
+            { speed: 110, cons: 20.0 },
+            { speed: 130, cons: 26.0 }
+        ];
+
+        // Interpolazione lineare per consumi intermedi
+        function getConsumption(v) {
+            if (v <= 30) return 13.0;
+            if (v >= 130) return 26.0;
+            for (let i = 0; i < consumptionMap.length - 1; i++) {
+                let p1 = consumptionMap[i];
+                let p2 = consumptionMap[i+1];
+                if (v >= p1.speed && v <= p2.speed) {
+                    let fraction = (v - p1.speed) / (p2.speed - p1.speed);
+                    return p1.cons + fraction * (p2.cons - p1.cons);
+                }
+            }
+            return 20.0;
+        }
+
+        function updateCalc() {
+            const s = parseFloat(speedSlider.value);
+            const d = parseFloat(distSlider.value);
+            const g = parseFloat(gasSlider.value);
+
+            speedVal.textContent = s + ' km/h';
+            distVal.textContent = d + ' km';
+            gasVal.textContent = g.toFixed(2) + ' €/L';
+
+            // Matematica REEV: 3.115 kWh per litro (Efficienza 35%)
+            const evCons = getConsumption(s);
+            const realFuel = evCons / 3.115;
+            const totalFuel = realFuel * (d / 100);
+            const totalCost = totalFuel * g;
+
+            outConsumo.textContent = realFuel.toFixed(2) + ' L/100km';
+            outLitri.textContent = totalFuel.toFixed(1) + ' L';
+            outCosto.textContent = '€ ' + totalCost.toFixed(2);
+        }
+
+        speedSlider.addEventListener('input', updateCalc);
+        distSlider.addEventListener('input', updateCalc);
+        gasSlider.addEventListener('input', updateCalc);
+
+        // Init
+        updateCalc();
+    </script>
+</body>
+</html>
