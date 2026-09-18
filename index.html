@@ -273,70 +273,13 @@
             <div class="input-group" style="max-width: 50%;">
                 <div class="input-header">
                     <label>Costo Ricarica</label>
-                    <span class="val-display el" id="val-cost-kwh">0.30 €/kWh</span>
+                    <span class="val-display el" id="val-cost-kwh">0.53 €/kWh</span>
                 </div>
-                <input type="range" id="inp-cost-kwh" min="0.05" max="1.00" step="0.01" value="0.30">
+                <input type="range" id="inp-cost-kwh" min="0.05" max="1.00" step="0.01" value="0.53">
             </div>
 
-            <div class="route-group">
-                <h4>Urbano / Città</h4>
-                <div class="route-group-compact">
-                    <div class="input-group">
-                        <div class="input-header">
-                            <label>Km</label>
-                            <span class="val-display el" id="val-el-km-urb">0 km</span>
-                        </div>
-                        <input type="range" class="km-slider" id="inp-el-km-urb" min="0" max="100" step="1" value="0">
-                    </div>
-                    <div class="input-group">
-                        <div class="input-header">
-                            <label>Consumo Elettrico</label>
-                            <span class="val-display el" id="val-el-cons-urb">15 kWh/100km</span>
-                        </div>
-                        <input type="range" id="inp-el-cons-urb" min="10" max="35" step="0.5" value="15">
-                    </div>
-                </div>
-            </div>
-
-            <div class="route-group">
-                <h4>Statale / Extraurbano</h4>
-                <div class="route-group-compact">
-                    <div class="input-group">
-                        <div class="input-header">
-                            <label>Km</label>
-                            <span class="val-display el" id="val-el-km-mix">0 km</span>
-                        </div>
-                        <input type="range" class="km-slider" id="inp-el-km-mix" min="0" max="100" step="1" value="0">
-                    </div>
-                    <div class="input-group">
-                        <div class="input-header">
-                            <label>Consumo Elettrico</label>
-                            <span class="val-display el" id="val-el-cons-mix">19 kWh/100km</span>
-                        </div>
-                        <input type="range" id="inp-el-cons-mix" min="10" max="35" step="0.5" value="19">
-                    </div>
-                </div>
-            </div>
-
-            <div class="route-group">
-                <h4>Autostrada</h4>
-                <div class="route-group-compact">
-                    <div class="input-group">
-                        <div class="input-header">
-                            <label>Km</label>
-                            <span class="val-display el" id="val-el-km-hw">0 km</span>
-                        </div>
-                        <input type="range" class="km-slider" id="inp-el-km-hw" min="0" max="100" step="1" value="0">
-                    </div>
-                    <div class="input-group">
-                        <div class="input-header">
-                            <label>Consumo Elettrico</label>
-                            <span class="val-display el" id="val-el-cons-hw">24 kWh/100km</span>
-                        </div>
-                        <input type="range" id="inp-el-cons-hw" min="10" max="40" step="0.5" value="24">
-                    </div>
-                </div>
-            </div>
+            <!-- Il container generato dinamicamente via JS -->
+            <div id="el-routes-container"></div>
             
             <div id="alert-battery" class="alert-box">
                 ⚠️ Batteria insufficiente! L'energia richiesta supera la capacità disponibile (rispettando il Target SoC). I calcoli assumeranno ricariche intermedie.
@@ -348,11 +291,12 @@
             <div class="input-group" style="max-width: 50%;">
                 <div class="input-header">
                     <label>Costo Carburante</label>
-                    <span class="val-display gas" id="val-cost-gas">1.80 €/l</span>
+                    <span class="val-display gas" id="val-cost-gas">2.00 €/l</span>
                 </div>
-                <input type="range" id="inp-cost-gas" min="1.00" max="2.50" step="0.01" value="1.80">
+                <input type="range" id="inp-cost-gas" min="1.00" max="2.50" step="0.01" value="2.00">
             </div>
 
+            <!-- Il container generato dinamicamente via JS -->
             <div id="gas-routes-container"></div>
         </div>
 
@@ -384,17 +328,17 @@
                 <div class="input-group">
                     <div class="input-header">
                         <label>Potenza AC (Wallbox/Colonnina)</label>
-                        <span class="val-display charge" id="val-power-ac">6.6 kW</span>
+                        <span class="val-display charge" id="val-power-ac">4.0 kW</span>
                     </div>
-                    <input type="range" id="inp-power-ac" min="1.4" max="22" step="0.1" value="6.6">
+                    <input type="range" id="inp-power-ac" min="1.4" max="22" step="0.1" value="4.0">
                 </div>
                 
                 <div class="input-group">
                     <div class="input-header">
                         <label>Potenza DC (Fast/HPC)</label>
-                        <span class="val-display charge" id="val-power-dc">46 kW</span>
+                        <span class="val-display charge" id="val-power-dc">29 kW</span>
                     </div>
-                    <input type="range" id="inp-power-dc" min="10" max="150" step="1" value="46">
+                    <input type="range" id="inp-power-dc" min="10" max="150" step="1" value="29">
                 </div>
             </div>
 
@@ -403,14 +347,14 @@
             <div class="route-group" style="margin-top: 15px; background: #F8F8FD; border-color: #D1C4E9;">
                 <div class="route-group-compact">
                     <div>
-                        <h4 style="color: #673AB7; font-weight: 600;">AC <span id="lbl-res-ac">6.6</span> kW</h4>
+                        <h4 style="color: #673AB7; font-weight: 600;">AC <span id="lbl-res-ac">4.0</span> kW</h4>
                         <div style="font-size: 26px; font-weight: 700; color: var(--text-main);" id="res-time-ac">0h 0m</div>
                         <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">
                             Erogazione basata sulla potenza massima selezionata, curva di assorbimento in riduzione solo oltre il 95%.
                         </div>
                     </div>
                     <div>
-                        <h4 style="color: var(--charge-color); font-weight: 600;">DC <span id="lbl-res-dc">46</span> kW (Fast)</h4>
+                        <h4 style="color: var(--charge-color); font-weight: 600;">DC <span id="lbl-res-dc">29</span> kW (Fast)</h4>
                         <div style="font-size: 26px; font-weight: 700; color: var(--text-main);" id="res-time-dc">0h 0m</div>
                         <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">
                             Potenza limitata dal profilo termico BMS (plateau a max 46kW) e dalla colonnina, tapering oltre il 55%.
@@ -477,20 +421,49 @@
 </div>
 
 <script>
-    const gasScenarios = [
-        { id: 'urb', label: 'Urbano (<50 km/h)', defaultCons: 7.0 },
-        { id: '70', label: '70 km/h', defaultCons: 5.4 },
-        { id: '80', label: '80 km/h', defaultCons: 5.8 },
-        { id: '90', label: '90 km/h', defaultCons: 6.2 },
-        { id: '100', label: '100 km/h', defaultCons: 6.7 },
-        { id: '110', label: '110 km/h', defaultCons: 7.1 },
-        { id: '120', label: '120 km/h', defaultCons: 7.7 },
-        { id: '130', label: '130 km/h', defaultCons: 8.5 }
+    // Configurazione unificata per generare dinamicamente le sezioni Elettrico e Carburante
+    const scenariosConfig = [
+        { id: 'urb', label: 'Urbano (<50 km/h)', elCons: 15.0, gasCons: 4.0 },
+        { id: '80', label: '80 km/h', elCons: 14.3, gasCons: 3.8 },
+        { id: '90', label: '90 km/h', elCons: 16.7, gasCons: 4.4 },
+        { id: '100', label: '100 km/h', elCons: 19.4, gasCons: 5.1 },
+        { id: '110', label: '110 km/h', elCons: 22.5, gasCons: 6.0 },
+        { id: '120', label: '120 km/h', elCons: 25.8, gasCons: 6.9 },
+        { id: '130', label: '130 km/h', elCons: 29.4, gasCons: 7.8 }
     ];
 
+    // Generazione HTML Sezione Elettrica
+    const elContainer = document.getElementById('el-routes-container');
+    let elHTML = '';
+    scenariosConfig.forEach(scen => {
+        elHTML += `
+            <div class="route-group">
+                <h4>${scen.label}</h4>
+                <div class="route-group-compact">
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Km Elettrico</label>
+                            <span class="val-display el" id="val-el-km-${scen.id}">0 km</span>
+                        </div>
+                        <input type="range" class="km-slider" id="inp-el-km-${scen.id}" min="0" max="100" step="1" value="0">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-header">
+                            <label>Consumo (kWh/100km)</label>
+                            <span class="val-display el" id="val-el-cons-${scen.id}">${scen.elCons.toFixed(1)} kWh/100km</span>
+                        </div>
+                        <input type="range" id="inp-el-cons-${scen.id}" min="10" max="40" step="0.1" value="${scen.elCons}">
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    elContainer.innerHTML = elHTML;
+
+    // Generazione HTML Sezione Carburante
     const gasContainer = document.getElementById('gas-routes-container');
     let gasHTML = '';
-    gasScenarios.forEach(scen => {
+    scenariosConfig.forEach(scen => {
         gasHTML += `
             <div class="route-group">
                 <h4>${scen.label}</h4>
@@ -505,9 +478,9 @@
                     <div class="input-group">
                         <div class="input-header">
                             <label>Consumo (l/100km)</label>
-                            <span class="val-display gas" id="val-gas-cons-${scen.id}">${scen.defaultCons.toFixed(1)} l/100km</span>
+                            <span class="val-display gas" id="val-gas-cons-${scen.id}">${scen.gasCons.toFixed(1)} l/100km</span>
                         </div>
-                        <input type="range" id="inp-gas-cons-${scen.id}" min="3" max="15" step="0.1" value="${scen.defaultCons}">
+                        <input type="range" id="inp-gas-cons-${scen.id}" min="3" max="15" step="0.1" value="${scen.gasCons}">
                     </div>
                 </div>
             </div>
@@ -525,20 +498,16 @@
         costKwh: document.getElementById('inp-cost-kwh'),
         costGas: document.getElementById('inp-cost-gas'),
         
-        elKmUrb: document.getElementById('inp-el-km-urb'),
-        elConsUrb: document.getElementById('inp-el-cons-urb'),
-        elKmMix: document.getElementById('inp-el-km-mix'),
-        elConsMix: document.getElementById('inp-el-cons-mix'),
-        elKmHw: document.getElementById('inp-el-km-hw'),
-        elConsHw: document.getElementById('inp-el-cons-hw'),
-
         chargeStart: document.getElementById('inp-charge-start'),
         chargeEnd: document.getElementById('inp-charge-end'),
         powerAC: document.getElementById('inp-power-ac'),
         powerDC: document.getElementById('inp-power-dc')
     };
 
-    gasScenarios.forEach(scen => {
+    // Mappatura dinamica degli input creati
+    scenariosConfig.forEach(scen => {
+        inputs[`elKm_${scen.id}`] = document.getElementById(`inp-el-km-${scen.id}`);
+        inputs[`elCons_${scen.id}`] = document.getElementById(`inp-el-cons-${scen.id}`);
         inputs[`gasKm_${scen.id}`] = document.getElementById(`inp-gas-km-${scen.id}`);
         inputs[`gasCons_${scen.id}`] = document.getElementById(`inp-gas-cons-${scen.id}`);
     });
@@ -551,13 +520,6 @@
         document.getElementById('val-cost-kwh').innerText = parseFloat(inputs.costKwh.value).toFixed(2) + " €/kWh";
         document.getElementById('val-cost-gas').innerText = parseFloat(inputs.costGas.value).toFixed(2) + " €/l";
 
-        document.getElementById('val-el-km-urb').innerText = inputs.elKmUrb.value + " km";
-        document.getElementById('val-el-cons-urb').innerText = parseFloat(inputs.elConsUrb.value).toFixed(1) + " kWh/100km";
-        document.getElementById('val-el-km-mix').innerText = inputs.elKmMix.value + " km";
-        document.getElementById('val-el-cons-mix').innerText = parseFloat(inputs.elConsMix.value).toFixed(1) + " kWh/100km";
-        document.getElementById('val-el-km-hw').innerText = inputs.elKmHw.value + " km";
-        document.getElementById('val-el-cons-hw').innerText = parseFloat(inputs.elConsHw.value).toFixed(1) + " kWh/100km";
-
         document.getElementById('val-charge-start').innerText = inputs.chargeStart.value + "%";
         document.getElementById('val-charge-end').innerText = inputs.chargeEnd.value + "%";
 
@@ -566,7 +528,9 @@
         document.getElementById('lbl-res-ac').innerText = parseFloat(inputs.powerAC.value).toFixed(1);
         document.getElementById('lbl-res-dc').innerText = inputs.powerDC.value;
 
-        gasScenarios.forEach(scen => {
+        scenariosConfig.forEach(scen => {
+            document.getElementById(`val-el-km-${scen.id}`).innerText = inputs[`elKm_${scen.id}`].value + " km";
+            document.getElementById(`val-el-cons-${scen.id}`).innerText = parseFloat(inputs[`elCons_${scen.id}`].value).toFixed(1) + " kWh/100km";
             document.getElementById(`val-gas-km-${scen.id}`).innerText = inputs[`gasKm_${scen.id}`].value + " km";
             document.getElementById(`val-gas-cons-${scen.id}`).innerText = parseFloat(inputs[`gasCons_${scen.id}`].value).toFixed(1) + " l/100km";
         });
@@ -613,9 +577,12 @@
             remainingText.style.color = "var(--electric-color)";
         }
 
-        let sumEl = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
+        let sumEl = 0;
         let sumGas = 0;
-        gasScenarios.forEach(scen => { sumGas += parseInt(inputs[`gasKm_${scen.id}`].value); });
+        scenariosConfig.forEach(scen => { 
+            sumEl += parseInt(inputs[`elKm_${scen.id}`].value); 
+            sumGas += parseInt(inputs[`gasKm_${scen.id}`].value); 
+        });
         
         document.getElementById('prog-el').style.width = (sumEl / maxTot * 100) + "%";
         document.getElementById('prog-gas').style.width = (sumGas / maxTot * 100) + "%";
@@ -640,26 +607,23 @@
 
         let timeAC_h = 0;
         let timeDC_h = 0;
-        let efficiency = 0.92; // 8% di perdita calore/inverter
+        let efficiency = 0.92; 
         let kwhPerPercent = battCap / 100;
 
         for (let i = cStart; i < cEnd; i++) {
-            // Curva Ideale BMS DC
             let idealDC = 46;
-            if (i < 10) idealDC = 30 + (i * 1.6); // Ramp up
-            else if (i <= 55) idealDC = 46; // Plateau BMS
-            else if (i <= 75) idealDC = 46 - ((i - 55) * 0.8); // Taglio a 30kW
-            else if (i <= 90) idealDC = 30 - ((i - 75) * 1.0); // Taglio a 15kW
-            else idealDC = 15 - ((i - 90) * 1.0); // Fine carica
+            if (i < 10) idealDC = 30 + (i * 1.6); 
+            else if (i <= 55) idealDC = 46; 
+            else if (i <= 75) idealDC = 46 - ((i - 55) * 0.8); 
+            else if (i <= 90) idealDC = 30 - ((i - 75) * 1.0); 
+            else idealDC = 15 - ((i - 90) * 1.0); 
             
-            if (idealDC < 4) idealDC = 4; // Limite hardware minimo
+            if (idealDC < 4) idealDC = 4; 
 
-            // Assorbimento effettivo = minore tra disponibilità colonnina e limite BMS
             let pDC = Math.min(maxDC, idealDC);
 
-            // Algoritmo Tapering AC basato sulla potenza max disponibile
             let pAC = maxAC;
-            if (i > 95) pAC = maxAC - ((i - 95) * (maxAC * 0.075)); // Taglio in proporzione
+            if (i > 95) pAC = maxAC - ((i - 95) * (maxAC * 0.075)); 
             if (pAC < Math.min(3, maxAC)) pAC = Math.min(3, maxAC);
 
             timeDC_h += (kwhPerPercent / (pDC * efficiency));
@@ -693,14 +657,15 @@
         let kwhAvail = battCap * ((socStart - socTarget) / 100);
         document.getElementById('res-el-avail').innerHTML = `${kwhAvail.toFixed(1)} <small>kWh</small>`;
 
-        // Calcolo energia REALE usata basata SOLO sui km in elettrico
-        let kwhUrb = (parseInt(inputs.elKmUrb.value) / 100) * parseFloat(inputs.elConsUrb.value);
-        let kwhMix = (parseInt(inputs.elKmMix.value) / 100) * parseFloat(inputs.elConsMix.value);
-        let kwhHw = (parseInt(inputs.elKmHw.value) / 100) * parseFloat(inputs.elConsHw.value);
-        
-        let totKwhUsed = kwhUrb + kwhMix + kwhHw;
+        let totKwhUsed = 0;
+        let totElKm = 0;
+        scenariosConfig.forEach(scen => {
+            let k = parseInt(inputs[`elKm_${scen.id}`].value);
+            let c = parseFloat(inputs[`elCons_${scen.id}`].value);
+            totElKm += k;
+            if (k > 0 && c > 0) totKwhUsed += (k / 100) * c;
+        });
 
-        // Calcolo SoC Residuo
         let consumedSocPerc = (totKwhUsed / battCap) * 100;
         let remainingSoc = socStart - consumedSocPerc;
         
@@ -713,7 +678,6 @@
             socResiduoEl.style.color = "var(--electric-color)";
         }
 
-        let totElKm = parseInt(inputs.elKmUrb.value) + parseInt(inputs.elKmMix.value) + parseInt(inputs.elKmHw.value);
         let totElCost = totKwhUsed * parseFloat(inputs.costKwh.value);
 
         let alertBatt = document.getElementById('alert-battery');
@@ -725,11 +689,11 @@
 
         let totLitUsed = 0;
         let totGasKm = 0;
-        gasScenarios.forEach(scen => {
+        scenariosConfig.forEach(scen => {
             let k = parseInt(inputs[`gasKm_${scen.id}`].value);
             let c = parseFloat(inputs[`gasCons_${scen.id}`].value);
             totGasKm += k;
-            if(k > 0 && c > 0) totLitUsed += (k / 100) * c; 
+            if (k > 0 && c > 0) totLitUsed += (k / 100) * c; 
         });
 
         let totGasCost = totLitUsed * parseFloat(inputs.costGas.value);
@@ -754,8 +718,10 @@
     }
 
     inpKmTot.addEventListener('input', onInteract);
+    
+    // Aggiunge i listener a tutti gli input generati
     Object.values(inputs).forEach(inp => {
-        inp.addEventListener('input', onInteract);
+        if(inp) inp.addEventListener('input', onInteract);
     });
 
     onInteract();
